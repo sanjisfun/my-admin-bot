@@ -10,20 +10,7 @@ Required environment variables:
 Optional environment variables:
     WARN_LIMIT          — warnings before auto-ban (default: 3)
     DEFAULT_MUTE_SECONDS — default mute duration in seconds (default: 3600)
-
-Commands (register with @BotFather):
-    start   - Open the admin menu
-    ban     - Ban a user from the group
-    unban   - Unban a user
-    mute    - Mute a user (restrict messages)
-    unmute  - Unmute a user
-    kick    - Remove a user from the group
-    warn    - Warn a user (auto-bans at limit)
-    unwarn  - Clear all warnings for a user
-    stats   - Show group statistics
-    users   - List active members
-    pin     - Pin the replied-to message
-    unpin   - Unpin a message
+    MINIAPP_URL         — URL to mini-app (default: https://your-domain.com/miniapp)
 """
 
 from __future__ import annotations
@@ -41,7 +28,10 @@ from config import BOT_TOKEN
 import database as db
 from handlers import (
     admin_router,
+    advanced_moderation_router,
     analytics_router,
+    channel_management_router,
+    miniapp_router,
     moderation_router,
     posting_router,
     welcome_router,
@@ -69,6 +59,9 @@ def build_dispatcher() -> Dispatcher:
 
     # Routers — order matters: specific before catch-all
     dp.include_router(welcome_router)
+    dp.include_router(miniapp_router)
+    dp.include_router(advanced_moderation_router)
+    dp.include_router(channel_management_router)
     dp.include_router(moderation_router)
     dp.include_router(analytics_router)
     dp.include_router(posting_router)
@@ -104,7 +97,6 @@ async def main() -> None:
 
     logger.info("Starting polling …")
     try:
-        # allowed_updates includes chat_member so join/leave events are tracked
         await dp.start_polling(
             bot,
             allowed_updates=[
@@ -112,6 +104,7 @@ async def main() -> None:
                 "callback_query",
                 "chat_member",
                 "my_chat_member",
+                "web_app_data",
             ],
         )
     finally:
