@@ -5,7 +5,7 @@ Start with:
     python main.py
 
 Required environment variables:
-    BOT_TOKEN   — Telegram bot token from @BotFather
+    BOT_TOKEN='8635918990:AAGr7Wc1LAGnZcK7y-glbg12vZC9VRviHtg'
 
 Optional environment variables:
     WARN_LIMIT          — warnings before auto-ban (default: 3)
