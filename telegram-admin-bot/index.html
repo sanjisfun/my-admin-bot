@@ -1,1 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2c2c2c;
+            --bg-tertiary: #3a3a3a;
+            --bg-hover: #4a4a4a;
+            --border: #5a5a5a;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --accent: #6a9fb5;
+            --danger: #8b3a3a;
+            --success: #3a8b3a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: var(--bg-primary);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--accent);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scroll-behavior: smooth;
+        }
+
+        .tabs::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .tabs::-webkit-scrollbar-track {
+            background: var(--bg-tertiary);
+            border-radius: 2px;
+        }
+
+        .tabs::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        .tab-btn {
+            padding: 10px 20px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .tab-btn:hover {
+            background: var(--bg-hover);
+            border-color: var(--accent);
+        }
+
+        .tab-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card {
+            background: var(--bg-tertiary);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .card h3 {
+            margin-bottom: 15px;
+            font-size: 18px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .card h4 {
+            margin-bottom: 10px;
+            font-size: 16px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-box:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            background: var(--bg-secondary);
+            box-shadow: 0 0 0 3px rgba(106, 159, 181, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background: var(--bg-hover);
+            border: none;
+            color: var(--text-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: var(--border);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.primary {
+            background: var(--accent);
+            color: var(--text-primary);
+        }
+
+        .btn.primary:hover {
+            background: #7ab5cc;
+        }
+
+        .btn.danger {
+            background: var(--danger);
+        }
+
+        .btn.danger:hover {
+            background: #a04a4a;
+        }
+
+        .btn.success {
+            background: var(--success);
+        }
+
+        .btn.success:hover {
+            background: #4a9b4a;
+        }
+
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .user-item {
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .user-item:hover {
+            border-left-color: #7ab5cc;
+            background: var(--bg-tertiary);
+        }
+
+        .user-info h4 {
+            margin-bottom: 5px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .user-info p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 8px 12px;
+            background: var(--bg-hover);
+            border: none;
+            color: var(--text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .action-btn:hover {
+            background: var(--border);
+            transform: scale(1.05);
+        }
+
+        .action-btn.danger {
+            background: var(--danger);
+        }
+
+        .action-btn.danger:hover {
+            background: #a04a4a;
+        }
+
+        .action-btn.success {
+            background: var(--success);
+        }
+
+        .action-btn.success:hover {
+            background: #4a9b4a;
+        }
+
+        .chart-container {
+            background: var(--bg-secondary);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .chart-label {
+            width: 80px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .chart-fill {
+            flex: 1;
+            height: 24px;
+            background: linear-gradient(90deg, var(--accent) 0%, #7ab5cc 100%);
+            border-radius: 4px;
+            margin: 0 10px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .chart-fill:hover {
+            box-shadow: 0 0 8px rgba(106, 159, 181, 0.5);
+        }
+
+        .chart-value {
+            width: 50px;
+            text-align: right;
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .alert.success {
+            background: rgba(58, 139, 58, 0.2);
+            color: #90ee90;
+            border: 1px solid var(--success);
+        }
+
+        .alert.error {
+            background: rgba(139, 58, 58, 0.2);
+            color: #ff9999;
+            border: 1px solid var(--danger);
+        }
+
+        .alert.info {
+            background: rgba(106, 159, 181, 0.2);
+            color: #99ccff;
+            border: 1px solid var(--accent);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: var(--accent);
+            color: var(--text-primary);
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge.danger {
+            background: var(--danger);
+        }
+
+        .badge.success {
+            background: var(--success);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .divider {
+            height: 1px;
+            background: var(--border);
+            margin: 15px 0;
+        }
+
+        @media (max-width: 480px) {
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-wrap: wrap;
+            }
+
+            .tab-btn {
+                flex: 1;
+                min-width: 100px;
+            }
+
+            .btn-group {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                width: 100%;
+            }
+
+            .header {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 15px;
+            }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent) 0%, #7ab5cc 100%);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            border-bottom: 1px dotted var(--accent);
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid var(--border);
+            font-size: 12px;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Admin Panel</h1>
+            <p>Manage your group and channels with ease</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('moderation')">🔨 Moderation</button>
+            <button class="tab-btn" onclick="switchTab('channels')">📢 Channels</button>
+            <button class="tab-btn" onclick="switchTab('analytics')">📈 Analytics</button>
+            <button class="tab-btn" onclick="switchTab('settings')">⚙️ Settings</button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="dashboard" class="tab-content active">
+            <div class="card">
+                <h3>📊 Quick Stats</h3>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-value">1,234</div>
+                        <div class="stat-label">Messages</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">156</div>
+                        <div class="stat-label">Members</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">45</div>
+                        <div class="stat-label">Active Today</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">Warnings</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📈 Activity (Last 7 Days)</h3>
+                <div class="chart-container">
+                    <div class="chart-bar">
+                        <div class="chart-label">Mon</div>
+                        <div class="chart-fill" style="width: 45%;"></div>
+                        <div class="chart-value">180</div>
+                    </div>
+                    <div class="chart-bar">
+                        <div class="chart-label">Tue</div>
+                        <div class="chart-fill" style="width: 65%;"></div>
+                        <div class="chart-value">260</div>
+                    </div>
+                    <div class="chart-bar">
+                        <div class="chart-label">Wed</div>
+                        <div class="chart-fill" style="width: 55%;"></div>
+                        <div class="chart-value">220</div>
+                    </div>
+                    <div class="chart-bar">
+                        <div class="chart-label">Thu</div>
+                        <div class="chart-fill" style="width: 75%;"></div>
+                        <div class="chart-value">300</div>
+                    </div>
+                    <div class="chart-bar">
+                        <div class="chart-label">Fri</div>
+                        <div class="chart-fill" style="width: 85%;"></div>
+                        <div class="chart-value">340</div>
+                    </div>
+                    <div class="chart-bar">
+                        <div class="chart-label">Sat</div>
+                        <div class="chart-fill" style="width: 70%;"></div>
+                        <div class="chart-value">280</div>
+                    </div>
+                    <div class="chart-bar">
+                        <div class="chart-label">Sun</div>
+                        <div class="chart-fill" style="width: 50%;"></div>
+                        <div class="chart-value">200</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>⚠️ Recent Actions</h3>
+                <div style="font-size: 14px;">
+                    <p>✅ <span style="color: var(--text-secondary);">User @john_doe warned (2/3)</span></p>
+                    <p>🚫 <span style="color: var(--text-secondary);">User @spam_bot banned</span></p>
+                    <p>🔇 <span style="color: var(--text-secondary);">User @noisy muted for 1h</span></p>
+                    <p>📌 <span style="color: var(--text-secondary);">Message pinned</span></p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🎯 Quick Actions</h3>
+                <div class="btn-group">
+                    <button class="btn primary" onclick="switchTab('moderation')">🔨 Moderate</button>
+                    <button class="btn primary" onclick="switchTab('channels')">📢 Post</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Moderation Tab -->
+        <div id="moderation" class="tab-content">
+            <div class="card">
+                <h3>🔨 Moderation Tools</h3>
+                <div class="form-group">
+                    <label>User ID or Username</label>
+                    <input type="text" id="userInput" placeholder="@username or 123456789">
+                </div>
+                <div class="form-group">
+                    <label>Action</label>
+                    <select id="actionSelect" onchange="updateActionUI()">
+                        <option value="">Select action...</option>
+                        <option value="warn">⚠️ Warn</option>
+                        <option value="mute">🔇 Mute</option>
+                        <option value="kick">👢 Kick</option>
+                        <option value="ban">🚫 Ban</option>
+                    </select>
+                </div>
+                <div class="form-group" id="durationGroup" style="display: none;">
+                    <label>Duration (minutes)</label>
+                    <input type="number" id="durationInput" placeholder="60" min="1" max="10080">
+                </div>
+                <div class="form-group">
+                    <label>Reason</label>
+                    <textarea id="reasonInput" placeholder="Why are you taking this action?"></textarea>
+                </div>
+                <button class="btn primary" onclick="executeAction()">Execute Action</button>
+            </div>
+
+            <div class="card">
+                <h3>👥 Active Users</h3>
+                <div id="usersList">
+                    <div class="user-item">
+                        <div class="user-info">
+                            <h4>@john_doe <span class="badge danger">2/3</span></h4>
+                            <p>ID: 123456789 • Warnings: 2/3</p>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="action-btn" onclick="warnUser(123456789)">⚠️</button>
+                            <button class="action-btn" onclick="muteUser(123456789)">🔇</button>
+                            <button class="action-btn danger" onclick="banUser(123456789)">🚫</button>
+                        </div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-info">
+                            <h4>@jane_smith <span class="badge success">0/3</span></h4>
+                            <p>ID: 987654321 • Warnings: 0/3</p>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="action-btn" onclick="warnUser(987654321)">⚠️</button>
+                            <button class="action-btn" onclick="muteUser(987654321)">🔇</button>
+                            <button class="action-btn danger" onclick="banUser(987654321)">🚫</button>
+                        </div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-info">
+                            <h4>@alex_smith</h4>
+                            <p>ID: 555666777 • Warnings: 1/3</p>
+                        </div>
+                        <div class="action-buttons">
+                            <button class="action-btn" onclick="warnUser(555666777)">⚠️</button>
+                            <button class="action-btn" onclick="muteUser(555666777)">🔇</button>
+                            <button class="action-btn danger" onclick="banUser(555666777)">🚫</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🛡️ Spam Filter</h3>
+                <div class="form-group">
+                    <label>Add Spam Keyword</label>
+                    <input type="text" id="spamKeyword" placeholder="Enter keyword to block">
+                </div>
+                <button class="btn primary" onclick="addSpamKeyword()">Add Keyword</button>
+            </div>
+        </div>
+
+        <!-- Channels Tab -->
+        <div id="channels" class="tab-content">
+            <div class="card">
+                <h3>📢 Channel Management</h3>
+                <div class="form-group">
+                    <label>Channel</label>
+                    <select>
+                        <option>Select channel...</option>
+                        <option>@news_channel</option>
+                        <option>@updates_channel</option>
+                        <option>@announcements</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Post Text</label>
+                    <textarea id="postText" placeholder="Write your post..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="scheduleCheckbox" onchange="toggleSchedule()"> Schedule post
+                    </label>
+                </div>
+                <div class="form-group" id="scheduleGroup" style="display: none;">
+                    <label>Schedule Date & Time</label>
+                    <input type="datetime-local" id="scheduleTime">
+                </div>
+                <button class="btn primary" onclick="publishPost()">📤 Publish Post</button>
+            </div>
+
+            <div class="card">
+                <h3>📊 Channel Statistics</h3>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-value">2.5K</div>
+                        <div class="stat-label">Subscribers</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">45K</div>
+                        <div class="stat-label">Views</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">3.2%</div>
+                        <div class="stat-label">Engagement</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">12</div>
+                        <div class="stat-label">Posts</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📝 Post Templates</h3>
+                <div class="form-group">
+                    <label>Template Name</label>
+                    <input type="text" id="templateName" placeholder="e.g., Daily Update">
+                </div>
+                <div class="form-group">
+                    <label>Template Text</label>
+                    <textarea id="templateText" placeholder="Template content..."></textarea>
+                </div>
+                <button class="btn primary" onclick="saveTemplate()">💾 Save Template</button>
+            </div>
+
+            <div class="card">
+                <h3>📅 Scheduled Posts</h3>
+                <div id="scheduledPostsList">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No scheduled posts</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics" class="tab-content">
+            <div class="card">
+                <h3>📈 Detailed Statistics</h3>
+                <div class="form-group">
+                    <label>Time Period</label>
+                    <select>
+                        <option>Last 7 days</option>
+                        <option>Last 30 days</option>
+                        <option>Last 90 days</option>
+                        <option>All time</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>👥 Top Posters</h3>
+                <div id="topPostersList">
+                    <div class="user-item">
+                        <div class="user-info">
+                            <h4>@john_doe</h4>
+                            <p>456 messages</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-info">
+                            <h4>@jane_smith</h4>
+                            <p>389 messages</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 85%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="user-item">
+                        <div class="user-info">
+                            <h4>@alex_smith</h4>
+                            <p>234 messages</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 51%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🔝 Member Growth</h3>
+                <div class="chart-container">
+                    <div class="chart-bar">
+                        <div class="chart-label">Week 1</div>
+                        <div class="chart-fill" style="width: 30%;"></div>
+                        <div class="chart-value">+12</div>
+                    </div>
+                    <div class="chart-bar">
+                        <div class="chart-label">Week 2</div>
+                        <div class="chart-fill" style="width: 45%;"></div>
+                        <div class="chart-value">+18</div>
+                    </div>
+                    <div class="chart-bar">
+                        <div class="chart-label">Week 3</div>
+                        <div class="chart-fill" style="width: 60%;"></div>
+                        <div class="chart-value">+24</div>
+                    </div>
+                    <div class="chart-bar">
+                        <div class="chart-label">Week 4</div>
+                        <div class="chart-fill" style="width: 75%;"></div>
+                        <div class="chart-value">+30</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>⚠️ Moderation Stats</h3>
+                <div class="stat-grid">
+                    <div class="stat-box">
+                        <div class="stat-value">24</div>
+                        <div class="stat-label">Warnings</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">8</div>
+                        <div class="stat-label">Mutes</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">Kicks</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">2</div>
+                        <div class="stat-label">Bans</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content">
+            <div class="card">
+                <h3>⚙️ Bot Settings</h3>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" checked> Auto-delete spam
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" checked> Log all actions
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox"> Notify on warnings
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" checked> Welcome new members
+                    </label>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🛡️ Moderation Settings</h3>
+                <div class="form-group">
+                    <label>Warn limit before ban</label>
+                    <input type="number" value="3" min="1" max="10">
+                </div>
+                <div class="form-group">
+                    <label>Default mute duration (minutes)</label>
+                    <input type="number" value="60" min="1" max="1440">
+                </div>
+                <div class="form-group">
+                    <label>Spam filter sensitivity</label>
+                    <input type="range" min="0" max="100" value="70">
+                    <small style="color: var(--text-secondary);">0 = Off, 100 = Maximum</small>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📢 Channel Settings</h3>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" checked> Allow scheduled posts
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" checked> Allow broadcasting
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>Max scheduled posts</label>
+                    <input type="number" value="50" min="1" max="500">
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>💾 Save Changes</h3>
+                <button class="btn primary" onclick="saveSettings()">💾 Save All Settings</button>
+            </div>
+
+            <div class="card">
+                <h3>ℹ️ About</h3>
+                <p style="color: var(--text-secondary); font-size: 14px; line-height: 1.6;">
+                    <strong>Admin Panel v2.0</strong><br>
+                    Powered by Telegram Bot API<br>
+                    <br>
+                    Features:<br>
+                    • Advanced moderation tools<br>
+                    • Channel management<br>
+                    • Detailed analytics<br>
+                    • Spam filtering<br>
+                    • User reputation system<br>
+                    <br>
+                    For support, contact @admin
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Telegram WebApp
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+
+        // Set theme
+        if (tg.colorScheme === 'dark') {
+            document.documentElement.style.setProperty('--bg-primary', '#1a1a1a');
+        }
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function updateActionUI() {
+            const action = document.getElementById('actionSelect').value;
+            const durationGroup = document.getElementById('durationGroup');
+            
+            if (action === 'mute') {
+                durationGroup.style.display = 'block';
+            } else {
+                durationGroup.style.display = 'none';
+            }
+        }
+
+        function executeAction() {
+            const user = document.getElementById('userInput').value;
+            const action = document.getElementById('actionSelect').value;
+            const reason = document.getElementById('reasonInput').value;
+            const duration = document.getElementById('durationInput').value || 3600;
+
+            if (!user || !action) {
+                showAlert('Please fill in all required fields', 'error');
+                return;
+            }
+
+            const data = {
+                action: action + '_user',
+                user_id: user,
+                reason: reason,
+                duration: parseInt(duration) * 60
+            };
+
+            tg.sendData(JSON.stringify(data));
+            showAlert(`User ${action}ed successfully!`, 'success');
+            
+            // Clear form
+            document.getElementById('userInput').value = '';
+            document.getElementById('actionSelect').value = '';
+            document.getElementById('reasonInput').value = '';
+        }
+
+        function warnUser(userId) {
+            const reason = prompt('Enter reason for warning:');
+            if (reason === null) return;
+            
+            const data = { action: 'warn_user', user_id: userId, reason: reason };
+            tg.sendData(JSON.stringify(data));
+            showAlert('User warned!', 'success');
+        }
+
+        function muteUser(userId) {
+            const duration = prompt('Enter mute duration in minutes:', '60');
+            if (duration === null) return;
+            
+            const data = { action: 'mute_user', user_id: userId, duration: parseInt(duration) * 60 };
+            tg.sendData(JSON.stringify(data));
+            showAlert('User muted!', 'success');
+        }
+
+        function banUser(userId) {
+            if (confirm('Are you sure you want to ban this user?')) {
+                const reason = prompt('Enter reason for ban:');
+                if (reason === null) return;
+                
+                const data = { action: 'ban_user', user_id: userId, reason: reason };
+                tg.sendData(JSON.stringify(data));
+                showAlert('User banned!', 'success');
+            }
+        }
+
+        function addSpamKeyword() {
+            const keyword = document.getElementById('spamKeyword').value;
+            if (!keyword) {
+                showAlert('Please enter a keyword', 'error');
+                return;
+            }
+            
+            const data = { action: 'add_spam_keyword', keyword: keyword };
+            tg.sendData(JSON.stringify(data));
+            showAlert(`Keyword "${keyword}" added to spam filter!`, 'success');
+            document.getElementById('spamKeyword').value = '';
+        }
+
+        function toggleSchedule() {
+            const checkbox = document.getElementById('scheduleCheckbox');
+            const scheduleGroup = document.getElementById('scheduleGroup');
+            scheduleGroup.style.display = checkbox.checked ? 'block' : 'none';
+        }
+
+        function publishPost() {
+            const text = document.getElementById('postText').value;
+            const isScheduled = document.getElementById('scheduleCheckbox').checked;
+            const scheduledTime = document.getElementById('scheduleTime').value;
+
+            if (!text) {
+                showAlert('Please enter post text', 'error');
+                return;
+            }
+
+            if (isScheduled && !scheduledTime) {
+                showAlert('Please select a scheduled time', 'error');
+                return;
+            }
+
+            const data = {
+                action: 'publish_post',
+                text: text,
+                scheduled: isScheduled,
+                scheduled_time: scheduledTime
+            };
+
+            tg.sendData(JSON.stringify(data));
+            showAlert('Post published successfully!', 'success');
+            document.getElementById('postText').value = '';
+        }
+
+        function saveTemplate() {
+            const name = document.getElementById('templateName').value;
+            const text = document.getElementById('templateText').value;
+
+            if (!name || !text) {
+                showAlert('Please fill in all fields', 'error');
+                return;
+            }
+
+            const data = {
+                action: 'save_template',
+                name: name,
+                text: text
+            };
+
+            tg.sendData(JSON.stringify(data));
+            showAlert(`Template "${name}" saved!`, 'success');
+            document.getElementById('templateName').value = '';
+            document.getElementById('templateText').value = '';
+        }
+
+        function saveSettings() {
+            showAlert('Settings saved successfully!', 'success');
+        }
+
+        function showAlert(message, type) {
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            document.querySelector('.container').insertBefore(alert, document.querySelector('.header').nextSibling);
+            setTimeout(() => alert.remove(), 3000);
+        }
+
+        // Expand main menu on load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Admin Panel loaded');
+            console.log('Telegram WebApp:', tg);
+        });
+    </script>
+</body>
+</html>
