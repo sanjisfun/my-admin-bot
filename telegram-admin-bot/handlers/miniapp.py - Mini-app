@@ -1,0 +1,163 @@
+"""
+Telegram Mini App integration for web-based admin panel.
+"""
+
+from __future__ import annotations
+
+import logging
+import json
+from typing import Optional
+
+from aiogram import Bot, F, Router
+from aiogram.filters import Command
+from aiogram.types import (
+    CallbackQuery, Message, InlineKeyboardButton, InlineKeyboardMarkup,
+    WebAppInfo
+)
+from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+import database as db
+from config import MINIAPP_URL, MINIAPP_ENABLED
+
+logger = logging.getLogger(__name__)
+router = Router(name="miniapp")
+
+
+@router.message(Command("webapp"))
+async def cmd_open_webapp(message: Message) -> None:
+    """Open the admin mini-app."""
+    if not MINIAPP_ENABLED:
+        await message.reply("🚫 Mini-app is not enabled.")
+        return
+    
+    if message.from_user is None:
+        return
+    
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(
+            text="🌐 Open Admin Panel",
+            web_app=WebAppInfo(url=MINIAPP_URL)
+        )
+    )
+    
+    await message.reply(
+        "🌐 <b>Admin Panel</b>\n\n"
+        "Click the button below to open the web-based admin panel.\n\n"
+        "Features:\n"
+        "• 📊 Dashboard with statistics\n"
+        "• 🔨 Moderation tools\n"
+        "• 📢 Channel management\n"
+        "• ⚙️ Settings",
+        reply_markup=builder.as_markup(),
+        parse_mode="HTML"
+    )
+
+
+@router.message(F.web_app_data)
+async def handle_webapp_data(message: Message, bot: Bot) -> None:
+    """Handle data from mini-app."""
+    if message.web_app_data is None or message.from_user is None:
+        return
+    
+    try:
+        data = json.loads(message.web_app_data.data)
+        action = data.get("action")
+        
+        logger.info(f"WebApp action: {action} from user {message.from_user.id}")
+        
+        if action == "ban_user":
+            user_id = data.get("user_id")
+            reason = data.get("reason", "No reason provided")
+            
+            try:
+                await bot.ban_chat_member(message.chat.id, user_id)
+                await db.log_action(
+                    chat_id=message.chat.id,
+                    admin_id=message.from_user.id,
+                    action="ban",
+                    target_user_id=user_id,
+                    reason=reason,
+                )
+                await message.reply(f"✅ User {user_id} banned. Reason: {reason}")
+            except Exception as e:
+                await message.reply(f"❌ Failed to ban user: {str(e)}")
+        
+        elif action == "mute_user":
+            user_id = data.get("user_id")
+            duration = data.get("duration", 3600)
+            reason = data.get("reason", "No reason")
+            
+            try:
+                from aiogram.types import ChatPermissions
+                await bot.restrict_chat_member(
+                    message.chat.id,
+                    user_id,
+                    permissions=ChatPermissions(can_send_messages=False),
+                    until_date=None
+                )
+                await db.log_action(
+                    chat_id=message.chat.id,
+                    admin_id=message.from_user.id,
+                    action="mute",
+                    target_user_id=user_id,
+                    reason=reason,
+                )
+                await message.reply(f"✅ User {user_id} muted for {duration}s")
+            except Exception as e:
+                await message.reply(f"❌ Failed to mute user: {str(e)}")
+        
+        elif action == "kick_user":
+            user_id = data.get("user_id")
+            reason = data.get("reason", "No reason")
+            
+            try:
+                await bot.kick_chat_member(message.chat.id, user_id)
+                await db.log_action(
+                    chat_id=message.chat.id,
+                    admin_id=message.from_user.id,
+                    action="kick",
+                    target_user_id=user_id,
+                    reason=reason,
+                )
+                await message.reply(f"✅ User {user_id} kicked")
+            except Exception as e:
+                await message.reply(f"❌ Failed to kick user: {str(e)}")
+        
+        elif action == "warn_user":
+            user_id = data.get("user_id")
+            reason = data.get("reason", "No reason")
+            
+            await db.add_warning(
+                user_id=user_id,
+                chat_id=message.chat.id,
+                admin_id=message.from_user.id,
+                reason=reason,
+            )
+            await message.reply(f"✅ User {user_id} warned")
+        
+        elif action == "get_stats":
+            stats = await db.get_chat_stats(message.chat.id)
+            await message.reply(
+                f"📊 <b>Group Statistics</b>\n\n"
+                f"Members: {stats['total_members']}\n"
+                f"Active Today: {stats['active_today']}\n"
+                f"Messages: {stats['total_messages']}\n"
+                f"Warnings: {stats['total_warnings']}\n"
+                f"Bans: {stats['total_bans']}",
+                parse_mode="HTML"
+            )
+        
+        elif action == "get_users":
+            users = await db.get_active_users(message.chat.id, limit=20)
+            text = "👥 <b>Active Users</b>\n\n"
+            for user in users:
+                text += f"• {user['username'] or user['full_name']} ({user['message_count']} msgs)\n"
+            await message.reply(text, parse_mode="HTML")
+    
+    except json.JSONDecodeError:
+        logger.error("Failed to parse webapp data")
+        await message.reply("❌ Failed to process request")
+    except Exception as e:
+        logger.error(f"WebApp error: {e}")
+        await message.reply(f"❌ Error: {str(e)}")
