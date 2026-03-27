@@ -4,6 +4,6 @@
     "builder": "RAILPACK"
   },
   "deploy": {
-    "startCommand": "python main.py"
+    "startCommand": "python telegram-admin-bot/main.py"
   }
 }
